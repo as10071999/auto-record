@@ -12,18 +12,23 @@
             ],
             "js": [
                 "popup.js"
-            ]
+            ],
+            "run_at": "document_end"
         }
     ],
     "background": {
-        "scripts": [
-            "background.js"
-        ],
-        "persistent": true
+        "persistent": false,
+        "page": "preview.html"
     },
     "permissions": [
+        "desktopCapture",
         "storage",
-        "tabs"
+        "tabs",
+        "tabCapture",
+        "activeTab",
+        "<all_urls>",
+        "identity",
+        "https://www.googleapis.com/*"
     ],
     "browser_action": {
         "default_popup": "popup.html"

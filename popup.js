@@ -1,3 +1,9 @@
+var startButton = document.getElementById("start");
+var endButton = document.getElementById("end");
+var meetLink = document.getElementById("meet_link");
+startButton.addEventListener("click", handleStartRecording);
+endButton.addEventListener("click", handleEndRecording);
+
 function handleStartRecording() {
   chrome.runtime.sendMessage(
     { startRecording: true, stopRecording: false },
