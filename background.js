@@ -1,14 +1,3 @@
-let preview = document.getElementById("preview");
-let recording = document.getElementById("recording");
-let startButton = document.getElementById("startButton");
-let stopButton = document.getElementById("stopButton");
-let downloadButton = document.getElementById("downloadButton");
-let logElement = document.getElementById("log");
-
-function log(msg) {
-  logElement.innerHTML += msg + "\n";
-}
-
 var isRecording = false;
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -17,6 +6,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       ? "from a content script:" + sender.tab.url
       : "from the extension"
   );
+
   if (request.startRecording && !isRecording) {
     sendResponse({ error: "Started Recording" });
     isRecording = true;
@@ -40,13 +30,42 @@ async function captureTabUsingTabCapture() {
         audio: true,
         video: true,
       };
-      chrome.tabCapture.capture(constraints, async function (stream) {
+      chrome.tabCapture.capture(constraints, function (stream) {
         if (stream) {
-          preview.srcObject = stream;
-          preview.captureStream =
-            preview.captureStream || preview.mozCaptureStream;
-          await new Promise((resolve) => (preview.onplaying = resolve));
-          log("Hello");
+          let recorder = new MediaRecorder(stream);
+          let data = [];
+          recorder.ondataavailable = (event) => data.push(event.data);
+          recorder.start();
+          let stopped = new Promise((resolve, reject) => {
+            recorder.onstop = resolve;
+            recorder.onerror = (event) => reject(event.name);
+          });
+          let recorded = new Promise((resolve) =>
+            chrome.runtime.onMessage.addListener(function (
+              request,
+              sender,
+              sendResponse
+            ) {
+              console.log(
+                sender.tab
+                  ? "from a content script:" + sender.tab.url
+                  : "from the extension"
+              );
+
+              if (request.stopRecording && isRecording) {
+                sendResponse({ error: "Already Started Recording" });
+                resolve("Stop Button Pressed");
+              }
+            })
+          ).then((Msg) => {
+            console.log(Msg);
+            return recorder.state == "recording" && recorder.stop();
+          });
+          return Promise.all([stopped, recorded]).then((data) => {
+            chrome.tabs.create({
+              url: "preview.html",
+            });
+          });
         }
       });
     }

@@ -1,37 +1,31 @@
 {
-    "name": "Auto Record",
-    "version": "1.0",
-    "description": "Enter your google meet link and time and get your recording",
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "css": [
-                "style.css"
-            ],
-            "js": [
-                "popup.js"
-            ],
-            "run_at": "document_end"
-        }
-    ],
-    "background": {
-        "persistent": false,
-        "page": "preview.html"
-    },
-    "permissions": [
-        "desktopCapture",
-        "storage",
-        "tabs",
-        "tabCapture",
-        "activeTab",
-        "<all_urls>",
-        "identity",
-        "https://www.googleapis.com/*"
-    ],
-    "browser_action": {
-        "default_popup": "popup.html"
-    },
-    "manifest_version": 2
+  "name": "Auto Record",
+  "version": "1.0",
+  "description": "Enter your google meet link and time and get your recording",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["style.css"],
+      "js": ["popup.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "persistent": false,
+    "scripts": ["background.js"]
+  },
+  "permissions": [
+    "desktopCapture",
+    "storage",
+    "tabs",
+    "tabCapture",
+    "activeTab",
+    "<all_urls>",
+    "identity",
+    "https://www.googleapis.com/*"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "manifest_version": 2
 }
