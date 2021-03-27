@@ -24,6 +24,7 @@ async function captureTabUsingTabCapture() {
     },
     function (arrayOfTabs) {
       var activeTab = arrayOfTabs[0];
+      console.log(activeTab);
       var activeTabId = activeTab.id; // or do whatever you need
       console.log("Current Tab Details", activeTab, activeTabId);
       var constraints = {
@@ -65,6 +66,59 @@ async function captureTabUsingTabCapture() {
             chrome.tabs.create({
               url: "preview.html",
             });
+            //prefixes of implementation that we want to test
+            window.indexedDB =
+              window.indexedDB ||
+              window.mozIndexedDB ||
+              window.webkitIndexedDB ||
+              window.msIndexedDB;
+
+            //prefixes of window.IDB objects
+            window.IDBTransaction =
+              window.IDBTransaction ||
+              window.webkitIDBTransaction ||
+              window.msIDBTransaction;
+            window.IDBKeyRange =
+              window.IDBKeyRange ||
+              window.webkitIDBKeyRange ||
+              window.msIDBKeyRange;
+            if (!window.indexedDB) {
+              console.log(
+                "Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available."
+              );
+            }
+            var db = null;
+            var request = window.indexedDB.open("AutoRecordDB ", 1); //First Version
+            request.onerror = function (event) {
+              // Do something with request.errorCode!
+              console.log("Error While making DB");
+            };
+            request.onsuccess = function (event) {
+              db = event.target.result;
+              // Do something with request.result!
+              console.log("Database Created Successfully");
+            };
+
+            request.onupgradeneeded = function (event) {
+              console.log("OnUpgrade is called");
+              db = event.target.result;
+              console.log("DB", db);
+              /*
+                record = {
+                  key:'',
+                  data:''
+                }
+              */
+
+              var recordings = db.createObjectStore("recordings", {
+                keyPath: "id",
+                autoIncrement: true,
+              });
+              const record = {
+                data: "Hello",
+              };
+              recordings.add(record);
+            };
           });
         }
       });
