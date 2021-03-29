@@ -31,7 +31,10 @@ window.onload = function () {
     const recordings = tx.objectStore("recordings");
     var request = recordings.get(1);
     request.onsuccess = function (event) {
-      console.log("Retrieved Data", event.target.result);
+      console.log("Retrieved Data", event.target.result.data);
+    };
+    request.onerror = function (event) {
+      alert("Error While Retireving Data From DB");
     };
   };
 };

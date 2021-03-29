@@ -114,8 +114,13 @@ async function captureTabUsingTabCapture() {
                 keyPath: "id",
                 autoIncrement: true,
               });
+              var mimeType = "video/webm";
+              var fileExtension = "webm";
+              var file = new File([data], getFileName(fileExtension), {
+                type: mimeType,
+              });
               const record = {
-                data: "Hello",
+                data: file,
               };
               recordings.add(record);
             };
@@ -124,4 +129,39 @@ async function captureTabUsingTabCapture() {
       });
     }
   );
+}
+
+function getFileName(fileExtension) {
+  var d = new Date();
+  var year = d.getUTCFullYear() + "";
+  var month = d.getUTCMonth() + "";
+  var date = d.getUTCDate() + "";
+
+  if (month.length === 1) {
+    month = "0" + month;
+  }
+
+  if (date.length === 1) {
+    date = "0" + date;
+  }
+  return year + month + date + getRandomString() + "." + fileExtension;
+}
+
+function getRandomString() {
+  if (
+    window.crypto &&
+    window.crypto.getRandomValues &&
+    navigator.userAgent.indexOf("Safari") === -1
+  ) {
+    var a = window.crypto.getRandomValues(new Uint32Array(3)),
+      token = "";
+    for (var i = 0, l = a.length; i < l; i++) {
+      token += a[i].toString(36);
+    }
+    return token;
+  } else {
+    return (Math.random() * new Date().getTime())
+      .toString(36)
+      .replace(/\./g, "");
+  }
 }
