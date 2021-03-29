@@ -1,3 +1,9 @@
+let preview = document.getElementById("preview");
+let recording = document.getElementById("recording");
+let startButton = document.getElementById("startButton");
+let stopButton = document.getElementById("stopButton");
+let downloadButton = document.getElementById("downloadButton");
+
 window.onload = function () {
   //   alert("Page is loaded");
   //prefixes of implementation that we want to test
@@ -32,6 +38,20 @@ window.onload = function () {
     var request = recordings.get(1);
     request.onsuccess = function (event) {
       console.log("Retrieved Data", event.target.result.data);
+      const file = event.target.result.data;
+      recording.src = URL.createObjectURL(file);
+
+      console.log("URL", URL.createObjectURL(file));
+      downloadButton.href = recording.src;
+      downloadButton.download = "RecordedVideo.webm";
+
+      console.log(
+        "Successfully recorded " +
+          file.size +
+          " bytes of " +
+          file.type +
+          " media."
+      );
     };
     request.onerror = function (event) {
       alert("Error While Retireving Data From DB");

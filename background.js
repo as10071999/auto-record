@@ -33,36 +33,8 @@ async function captureTabUsingTabCapture() {
       };
       chrome.tabCapture.capture(constraints, function (stream) {
         if (stream) {
-          let recorder = new MediaRecorder(stream);
-          let data = [];
-          recorder.ondataavailable = (event) => data.push(event.data);
-          recorder.start();
-          let stopped = new Promise((resolve, reject) => {
-            recorder.onstop = resolve;
-            recorder.onerror = (event) => reject(event.name);
-          });
-          let recorded = new Promise((resolve) =>
-            chrome.runtime.onMessage.addListener(function (
-              request,
-              sender,
-              sendResponse
-            ) {
-              console.log(
-                sender.tab
-                  ? "from a content script:" + sender.tab.url
-                  : "from the extension"
-              );
-
-              if (request.stopRecording && isRecording) {
-                sendResponse({ error: "Already Started Recording" });
-                resolve("Stop Button Pressed");
-              }
-            })
-          ).then((Msg) => {
-            console.log(Msg);
-            return recorder.state == "recording" && recorder.stop();
-          });
-          return Promise.all([stopped, recorded]).then((data) => {
+          startRecording(stream).then((data) => {
+            console.log("Data Recieved", data);
             chrome.tabs.create({
               url: "preview.html",
             });
@@ -104,11 +76,11 @@ async function captureTabUsingTabCapture() {
               db = event.target.result;
               console.log("DB", db);
               /*
-                record = {
-                  key:'',
-                  data:''
-                }
-              */
+              record = {
+                key:'',
+                data:''
+              }
+            */
 
               var recordings = db.createObjectStore("recordings", {
                 keyPath: "id",
@@ -116,9 +88,10 @@ async function captureTabUsingTabCapture() {
               });
               var mimeType = "video/webm";
               var fileExtension = "webm";
-              var file = new File([data], getFileName(fileExtension), {
-                type: mimeType,
-              });
+              // var file = new File([data], getFileName(fileExtension), {
+              //   type: mimeType,
+              // });
+              var file = new Blob(data, { type: "video/webm" });
               const record = {
                 data: file,
               };
@@ -130,7 +103,47 @@ async function captureTabUsingTabCapture() {
     }
   );
 }
+function startRecording(stream) {
+  let recorder = new MediaRecorder(stream);
+  let data = [];
+  recorder.ondataavailable = (event) => {
+    console.log("OnDataAvailable Called");
+    data.push(event.data);
+  };
+  recorder.start(100);
+  let stopped = new Promise((resolve, reject) => {
+    recorder.onstop = resolve;
+    recorder.onerror = (event) => reject(event.name);
+  });
+  let recorded = new Promise((resolve) =>
+    chrome.runtime.onMessage.addListener(function (
+      request,
+      sender,
+      sendResponse
+    ) {
+      console.log(
+        sender.tab
+          ? "from a content script:" + sender.tab.url
+          : "from the extension"
+      );
 
+      if (request.stopRecording && isRecording) {
+        sendResponse({ error: "Already Started Recording" });
+        stop(stream);
+        isRecording = false;
+        resolve("Stop Button Pressed");
+      }
+    })
+  ).then((Msg) => {
+    console.log(Msg);
+    return recorder.state == "recording" && recorder.stop();
+  });
+  return Promise.all([stopped, recorded]).then(() => data);
+}
+
+function stop(stream) {
+  stream.getTracks().forEach((track) => track.stop());
+}
 function getFileName(fileExtension) {
   var d = new Date();
   var year = d.getUTCFullYear() + "";
