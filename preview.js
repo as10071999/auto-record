@@ -32,7 +32,7 @@ window.onload = function () {
   };
   request.onsuccess = function (event) {
     db = event.target.result;
-    alert("Database Created Successfully");
+    // alert("Database Created Successfully");
     const tx = db.transaction("recordings", "readonly");
     const recordings = tx.objectStore("recordings");
     var request = recordings.get(1);
