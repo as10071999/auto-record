@@ -1,21 +1,27 @@
 var isRecording = false;
-
+var recorder = null;
+let data = [];
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log(
-    sender.tab
-      ? "from a content script:" + sender.tab.url
-      : "from the extension"
-  );
-
   if (request.startRecording && !isRecording) {
     sendResponse({ error: "Started Recording" });
+    console.log("Started Recording");
     isRecording = true;
     captureTabUsingTabCapture();
   } else if (request.startRecording && isRecording) {
     sendResponse({ error: "Already Started Recording" });
+    console.log("Already Started Recording");
+  } else if (request.stopRecording && isRecording) {
+    sendResponse({ error: "Stopping Recording" });
+    console.log("Stopped Recording Called");
+    stopRecording();
   }
 });
-
+async function stopRecording() {
+  console.log("Recorder State Inside StopFn:", recorder.state);
+  if (recorder.state == "recording") recorder.stop();
+  isRecording = false;
+  console.log("Recorder State Inside StopFn:", recorder.state);
+}
 async function captureTabUsingTabCapture() {
   chrome.tabs.query(
     {
@@ -24,7 +30,7 @@ async function captureTabUsingTabCapture() {
     },
     function (arrayOfTabs) {
       var activeTab = arrayOfTabs[0];
-      console.log(activeTab);
+      // console.log(activeTab);
       var activeTabId = activeTab.id; // or do whatever you need
       console.log("Current Tab Details", activeTab, activeTabId);
       var constraints = {
@@ -69,33 +75,35 @@ async function captureTabUsingTabCapture() {
               db = event.target.result;
               // Do something with request.result!
               console.log("Database Created Successfully");
+              var file = new Blob(data, { type: "video/webm" });
+              let tempId = getRandomString();
+              localStorage.setItem("RecordID", tempId);
+              console.log("Set Temp Id", tempId);
+              const record = {
+                id: tempId,
+                data: file,
+              };
+              var request = db
+                .transaction(["recordings"], "readwrite")
+                .objectStore("recordings")
+                .add(record);
+              request.onsuccess = function (event) {
+                console.log("Recording has been added to your database.");
+              };
+
+              request.onerror = function (event) {
+                console.log("Unable to add data Recording");
+              };
             };
 
-            request.onupgradeneeded = function (event) {
+            request.onupgradeneeded = async function (event) {
               console.log("OnUpgrade is called");
               db = event.target.result;
               console.log("DB", db);
-              /*
-              record = {
-                key:'',
-                data:''
-              }
-            */
 
-              var recordings = db.createObjectStore("recordings", {
+              await db.createObjectStore("recordings", {
                 keyPath: "id",
-                autoIncrement: true,
               });
-              var mimeType = "video/webm";
-              var fileExtension = "webm";
-              // var file = new File([data], getFileName(fileExtension), {
-              //   type: mimeType,
-              // });
-              var file = new Blob(data, { type: "video/webm" });
-              const record = {
-                data: file,
-              };
-              recordings.add(record);
             };
           });
         }
@@ -104,41 +112,25 @@ async function captureTabUsingTabCapture() {
   );
 }
 function startRecording(stream) {
-  let recorder = new MediaRecorder(stream);
-  let data = [];
+  console.log("Recorder Initilized");
+  recorder = new MediaRecorder(stream);
   recorder.ondataavailable = (event) => {
     console.log("OnDataAvailable Called");
     data.push(event.data);
   };
   recorder.start(100);
+  console.log("Recording Started");
   let stopped = new Promise((resolve, reject) => {
-    recorder.onstop = resolve;
+    recorder.onstop = function (e) {
+      resolve("Resolvoing Stopped Promise");
+    };
     recorder.onerror = (event) => reject(event.name);
   });
-  let recorded = new Promise((resolve) =>
-    chrome.runtime.onMessage.addListener(function (
-      request,
-      sender,
-      sendResponse
-    ) {
-      console.log(
-        sender.tab
-          ? "from a content script:" + sender.tab.url
-          : "from the extension"
-      );
-
-      if (request.stopRecording && isRecording) {
-        sendResponse({ error: "Already Started Recording" });
-        stop(stream);
-        isRecording = false;
-        resolve("Stop Button Pressed");
-      }
-    })
-  ).then((Msg) => {
-    console.log(Msg);
-    return recorder.state == "recording" && recorder.stop();
+  return stopped.then((values) => {
+    console.log(values);
+    stop(stream);
+    return data;
   });
-  return Promise.all([stopped, recorded]).then(() => data);
 }
 
 function stop(stream) {

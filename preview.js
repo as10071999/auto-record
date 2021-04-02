@@ -35,7 +35,9 @@ window.onload = function () {
     // alert("Database Created Successfully");
     const tx = db.transaction("recordings", "readonly");
     const recordings = tx.objectStore("recordings");
-    var request = recordings.get(1);
+    var id = localStorage.getItem("RecordID");
+    var request = recordings.get(id);
+    console.log("Temp ID Retrived");
     request.onsuccess = function (event) {
       console.log("Retrieved Data", event.target.result.data);
       const file = event.target.result.data;
