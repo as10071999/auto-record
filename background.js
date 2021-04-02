@@ -36,9 +36,25 @@ async function captureTabUsingTabCapture() {
       var constraints = {
         audio: true,
         video: true,
+        audioConstraints: {
+          mandatory: {
+            echoCancellation: true,
+          },
+        },
+        videoConstraints: {
+          mandatory: {
+            chromeMediaSource: "tab",
+            maxWidth: 3840,
+            maxHeight: 2160,
+          },
+        },
       };
+      var context = new AudioContext();
+
       chrome.tabCapture.capture(constraints, function (stream) {
         if (stream) {
+          var nstream = context.createMediaStreamSource(stream);
+          nstream.connect(context.destination);
           startRecording(stream).then((data) => {
             console.log("Data Recieved", data);
             chrome.tabs.create({
