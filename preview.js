@@ -36,27 +36,29 @@ window.onload = function () {
     const tx = db.transaction("recordings", "readonly");
     const recordings = tx.objectStore("recordings");
     var id = localStorage.getItem("RecordID");
-    var request = recordings.get(id);
-    console.log("Temp ID Retrived");
-    request.onsuccess = function (event) {
-      console.log("Retrieved Data", event.target.result.data);
-      const file = event.target.result.data;
-      recording.src = URL.createObjectURL(file);
+    if (id) {
+      var request = recordings.get(id);
+      console.log("Temp ID Retrived", id);
+      request.onsuccess = function (event) {
+        console.log("Retrieved Data", event.target.result.data);
+        const file = event.target.result.data;
+        recording.src = URL.createObjectURL(file);
 
-      console.log("URL", URL.createObjectURL(file));
-      downloadButton.href = recording.src;
-      downloadButton.download = "RecordedVideo.webm";
+        console.log("URL", URL.createObjectURL(file));
+        downloadButton.href = recording.src;
+        downloadButton.download = "RecordedVideo.webm";
 
-      console.log(
-        "Successfully recorded " +
-          file.size +
-          " bytes of " +
-          file.type +
-          " media."
-      );
-    };
-    request.onerror = function (event) {
-      alert("Error While Retireving Data From DB");
-    };
+        console.log(
+          "Successfully recorded " +
+            file.size +
+            " bytes of " +
+            file.type +
+            " media."
+        );
+      };
+      request.onerror = function (event) {
+        alert("Error While Retireving Data From DB");
+      };
+    }
   };
 };
