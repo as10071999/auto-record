@@ -1,6 +1,6 @@
 var isRecording = false;
 var recorder = null;
-let data = [];
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.startRecording && !isRecording) {
     sendResponse({ error: "Started Recording" });
@@ -92,23 +92,30 @@ async function captureTabUsingTabCapture() {
               // Do something with request.result!
               console.log("Database Created Successfully");
               var file = new Blob(data, { type: "video/webm" });
-              let tempId = getRandomString();
-              localStorage.setItem("RecordID", tempId);
-              console.log("Set Temp Id", tempId);
               const record = {
-                id: tempId,
+                id: 1,
                 data: file,
               };
-              var request = db
+              var requestForClear = db
                 .transaction(["recordings"], "readwrite")
                 .objectStore("recordings")
-                .add(record);
-              request.onsuccess = function (event) {
-                console.log("Recording has been added to your database.");
+                .clear();
+              requestForClear.onsuccess = function (event) {
+                console.log("Cleared");
+                var request = db
+                  .transaction(["recordings"], "readwrite")
+                  .objectStore("recordings")
+                  .add(record);
+                request.onsuccess = function (event) {
+                  console.log("Recording has been added to your database.");
+                };
+                request.onerror = function (event) {
+                  console.log("Unable to add data Recording");
+                };
               };
 
-              request.onerror = function (event) {
-                console.log("Unable to add data Recording");
+              requestForClear.onerror = function (event) {
+                console.log("No able to clear ObjectStore");
               };
             };
 
@@ -128,13 +135,14 @@ async function captureTabUsingTabCapture() {
   );
 }
 function startRecording(stream) {
+  let data = [];
   console.log("Recorder Initilized");
   recorder = new MediaRecorder(stream);
   recorder.ondataavailable = (event) => {
     console.log("OnDataAvailable Called");
     data.push(event.data);
   };
-  recorder.start(100);
+  recorder.start();
   console.log("Recording Started");
   let stopped = new Promise((resolve, reject) => {
     recorder.onstop = function (e) {

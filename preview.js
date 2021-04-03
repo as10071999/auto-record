@@ -1,10 +1,9 @@
-let preview = document.getElementById("preview");
-let recording = document.getElementById("recording");
-let startButton = document.getElementById("startButton");
-let stopButton = document.getElementById("stopButton");
-let downloadButton = document.getElementById("downloadButton");
-
 window.onload = function () {
+  let preview = document.getElementById("preview");
+  let recording = document.getElementById("recording");
+  let startButton = document.getElementById("startButton");
+  let stopButton = document.getElementById("stopButton");
+  let downloadButton = document.getElementById("downloadButton");
   //   alert("Page is loaded");
   //prefixes of implementation that we want to test
   window.indexedDB =
@@ -35,19 +34,22 @@ window.onload = function () {
     // alert("Database Created Successfully");
     const tx = db.transaction("recordings", "readonly");
     const recordings = tx.objectStore("recordings");
-    var id = localStorage.getItem("RecordID");
-    if (id) {
-      var request = recordings.get(id);
-      console.log("Temp ID Retrived", id);
-      request.onsuccess = function (event) {
+    console.log("OBjStore", recordings);
+
+    var request = recordings.get(1);
+    request.onsuccess = function (event) {
+      if (event.target.result) {
         console.log("Retrieved Data", event.target.result.data);
-        const file = event.target.result.data;
+        var file = event.target.result.data;
+        console.log(file);
+        console.log("Before", recording.src);
         recording.src = URL.createObjectURL(file);
 
-        console.log("URL", URL.createObjectURL(file));
+        console.log("URL", recording.src);
+        recording.load();
         downloadButton.href = recording.src;
         downloadButton.download = "RecordedVideo.webm";
-
+        console.log("After", recording.src);
         console.log(
           "Successfully recorded " +
             file.size +
@@ -55,10 +57,10 @@ window.onload = function () {
             file.type +
             " media."
         );
-      };
-      request.onerror = function (event) {
-        alert("Error While Retireving Data From DB");
-      };
-    }
+      }
+    };
+    request.onerror = function (event) {
+      alert("Error While Retireving Data From DB");
+    };
   };
 };
