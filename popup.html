@@ -8,11 +8,13 @@
   </head>
   <body>
     <section>
-      <label for="time">Time of Class</label>
-      <input type="datetime-local" id="time" />
+      <label for="start_time">Time of Class</label>
+      <input type="datetime-local" id="start_time" required />
+      <label for="end_time">Time of Class</label>
+      <input type="datetime-local" id="end_time" required />
       <br /><br />
       <label for="meet_link">Link</label>
-      <input type="text" id="meet_link" />
+      <input type="text" id="meet_link" required />
       <br /><br />
       <button id="start">Start</button>
       <button id="end">End</button>

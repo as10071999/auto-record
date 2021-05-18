@@ -8,9 +8,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
   function handleStartRecording() {
     var meetLink = document.getElementById("meet_link").value;
-    var time = document.getElementById("time").value;
+    var startTime = document.getElementById("start_time").value;
+    var endTime = document.getElementById("end_time").value;
     document.getElementById("meet_link").disabled = true;
-    document.getElementById("time").disabled = true;
+    document.getElementById("start_time").disabled = true;
+    document.getElementById("end_time").disabled = true;
     startButton.disabled = true;
     endButton.disabled = false;
     chrome.runtime.sendMessage(
@@ -18,7 +20,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
         startRecording: true,
         stopRecording: false,
         link: meetLink,
-        time: time,
+        startTime: startTime,
+        endTime: endTime,
       },
       function (response) {
         console.log(response.error);
@@ -31,12 +34,14 @@ document.addEventListener("DOMContentLoaded", (event) => {
   function handleEndRecording() {
     document.getElementById("meet_link").value = "";
     document.getElementById("meet_link").disabled = false;
-    document.getElementById("time").value = "";
-    document.getElementById("time").disabled = false;
+    document.getElementById("start_time").value = "";
+    document.getElementById("start_time").disabled = false;
+    document.getElementById("end_time").value = "";
+    document.getElementById("end_time").disabled = false;
     startButton.disabled = false;
     endButton.disabled = true;
     chrome.runtime.sendMessage(
-      { startRecording: false, stopRecording: true, link: null },
+      { startRecording: false, stopRecording: true },
       function (response) {
         console.log(response.error);
       }
