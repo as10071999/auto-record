@@ -4,30 +4,22 @@
   "description": "Enter your google meet link and time and get your recording",
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "css": [
-        "style.css"
-      ],
-      "js": [
-        "popup.js"
-      ],
+      "matches": ["<all_urls>"],
+      "css": ["style.css"],
+      "js": ["popup.js"],
       "run_at": "document_end"
     }
   ],
   "background": {
     "persistent": false,
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["background.js"]
   },
   "permissions": [
     "desktopCapture",
     "storage",
     "tabs",
-    "tabCapture",
     "activeTab",
+    "tabCapture",
     "<all_urls>",
     "identity",
     "https://www.googleapis.com/*"

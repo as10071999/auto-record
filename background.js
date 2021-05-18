@@ -1,12 +1,17 @@
 var isRecording = false;
 var recorder = null;
-
+var link = null;
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.startRecording && !isRecording) {
     sendResponse({ error: "Started Recording" });
     console.log("Started Recording");
     isRecording = true;
-    captureTabUsingTabCapture();
+    console.log("Meet Link in background:", request.link);
+    console.log("Meet Time in background:", request.time);
+    link = request.link;
+    // if (link) captureTabUsingTabCapture();
+
+    // captureTabUsingTabCapture();
   } else if (request.startRecording && isRecording) {
     sendResponse({ error: "Already Started Recording" });
     console.log("Already Started Recording");
@@ -17,10 +22,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 async function stopRecording() {
-  console.log("Recorder State Inside StopFn:", recorder.state);
-  if (recorder.state == "recording") recorder.stop();
-  isRecording = false;
-  console.log("Recorder State Inside StopFn:", recorder.state);
+  if (recorder) {
+    console.log("Recorder State Inside StopFn:", recorder.state);
+    if (recorder.state == "recording") recorder.stop();
+    isRecording = false;
+    console.log("Recorder State Inside StopFn:", recorder.state);
+  }
 }
 async function captureTabUsingTabCapture() {
   chrome.tabs.query(
@@ -32,6 +39,7 @@ async function captureTabUsingTabCapture() {
       var activeTab = arrayOfTabs[0];
       // console.log(activeTab);
       var activeTabId = activeTab.id; // or do whatever you need
+      chrome.tabs.update(activeTabId, { url: link });
       console.log("Current Tab Details", activeTab, activeTabId);
       var constraints = {
         audio: true,
@@ -51,11 +59,20 @@ async function captureTabUsingTabCapture() {
       };
       var context = new AudioContext();
 
+      chrome.browserAction.setBadgeText({ tabId: activeTabId, text: "Stop" });
+      chrome.browserAction.setBadgeBackgroundColor({
+        tabId: activeTabId,
+        color: "red",
+      });
+
       chrome.tabCapture.capture(constraints, function (stream) {
         if (stream) {
           var nstream = context.createMediaStreamSource(stream);
           nstream.connect(context.destination);
           startRecording(stream).then((data) => {
+            chrome.browserAction.setBadgeText({ text: "Start" });
+            chrome.browserAction.setBadgeBackgroundColor({ color: "green" });
+
             console.log("Data Recieved", data);
             chrome.tabs.create({
               url: "preview.html",
